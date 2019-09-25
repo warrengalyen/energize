@@ -95,6 +95,15 @@ energize.load('mesh.json', {
 
 ```
 
+### No Cache
+Normally after an item is loaded, the content will be stored and if you fetch the same url, it will not download the content again. But you can set `noCache` to true in the item config and bypass this feature. It will remove the reference after the file is loaded.
+```js
+energize.load('img.jpg', {
+  noCache: true
+});
+
+```
+
 ### Individual asset preloading
 You can also add a listener to the individual asset. This feature only works with asset types `json, `text` and `any`.
 ```js

@@ -213,7 +213,7 @@ _p.createItem = _createItem
 _p._onLoading = _onLoading
 
 var energize = module.exports = create()
-energize.version = '0.1.8'
+energize.version = '0.1.9'
 energize.register = register
 energize.retrieveAll = retrieveAll
 energize.retrieve = retrieve
@@ -364,18 +364,27 @@ function _onItemLoad (item, itemList, isAlreadyLoaded) {
     this.totalWeight = 0
     this.loadingSignal = new ShortSignal()
     this._onLoading(item, itemList, loadingSignal, 1, 1)
+    if (item.noCache) _removeItemCache()
   } else {
     this._onLoading(item, itemList, loadingSignal, 1, this.loadedWeight / this.totalWeight)
+    if (item.noCache) _removeItemCache()
     if (!isAlreadyLoaded) {
       this.loadNext()
     }
   }
 }
 
+function _removeItemCache (item) {
+  var url = item.url
+  item.content = undef
+  addedItems[url] = undef
+  loadedItems[url] = undef
+}
+
 function _createItem (url, type, cfg) {
   cfg = cfg || {}
   if (!cfg.crossOrigin) {
-    for (domain in this.crossOriginMap) {
+    for (var domain in this.crossOriginMap) {
       if (url.indexOf(domain) === 0) {
         cfg.crossOrigin = this.crossOriginMap[domain]
         break
