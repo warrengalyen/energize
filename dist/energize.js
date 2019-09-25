@@ -206,6 +206,7 @@ _p.start = start;
 _p._onLoading = _onLoading;
 
 var energize = module.exports = create();
+energize.version = '0.1.4';
 energize.register = register;
 energize.retrieveAll = retrieveAll;
 energize.retrieve = retrieve;
@@ -401,15 +402,19 @@ function retrieve(target, type) {
 
 function testExtensions(url, ItemClass) {
     if (!url) return;
+    var urlExtension = _getExtension(url);
     var extensions = ItemClass.extensions;
     var i = extensions.length;
-    var len = url.length;
     while (i--) {
-        if (url.lastIndexOf('.' + extensions[i]) === len - extensions[i].length - 1) {
+        if (urlExtension === extensions[i]) {
             return true;
         }
     }
     return false;
+}
+
+function _getExtension(url) {
+    return url.split('.').pop().split(/\#|\?/)[0];
 }
 
 function create() {
@@ -647,7 +652,7 @@ function load() {
     if (img.width) {
         this._onLoad();
     } else {
-        img.onload = this.boundOnLoad();
+        img.onload = this.boundOnLoad;
     }
 }
 
