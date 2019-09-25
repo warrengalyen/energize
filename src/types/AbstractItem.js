@@ -1,70 +1,69 @@
-var ShortSignal = require('short-signal');
-var energize = require('../energize');
+var ShortSignal = require('short-signal')
+var energize = require('../energize')
 
-var undef;
+var undef
 
-function AbstractItem(url, cfg) {
-    if (!url) return;
-    this.url = url;
-    this.loadedWeight = 0;
-    this.weight = 1;
-    for (var id in cfg) {
-        this[id] = cfg[id];
+function AbstractItem (url, cfg) {
+  if (!url) return
+  this.url = url
+  this.loadedWeight = 0
+  this.weight = 1
+  for (var id in cfg) {
+    this[id] = cfg[id]
+  }
+
+  if (!this.type) {
+    this.type = this.constructor.type
+  }
+
+  if (this.hasLoading) {
+    this.loadingSignal = new ShortSignal()
+    this.loadingSignal.add(_onLoading, this)
+    if (this.onLoading) {
+      this.loadSignal.add(this.onLoading)
     }
+  }
 
-    if (!this.type) {
-        this.type = this.constructor.type;
-    }
+  var self = this
+  this.boundOnLoad = function () { self._onLoad() }
+  this.onLoaded = new ShortSignal()
 
-    if (this.hasLoading) {
-        this.loadingSignal = new ShortSignal();
-        this.loadingSignal.add(_onLoading, this);
-        if (this.onLoading) {
-            this.loadSignal.add(this.onLoading);
-        }
-    }
-
-    var self = this;
-    this.boundOnLoad = function() { self._onLoad(); };
-    this.onLoaded = new ShortSignal();
-
-    energize.addedItems[url] = this;
+  energize.addedItems[url] = this
 
 }
 
-module.exports = AbstractItem;
-var _p = AbstractItem.prototype;
-_p.loaded = load;
-_p._onLoad = _onLoad;
-_p._onLoading = _onLoading;
-_p.dispatch = dispatch;
+module.exports = AbstractItem
+var _p = AbstractItem.prototype
+_p.loaded = load
+_p._onLoad = _onLoad
+_p._onLoading = _onLoading
+_p.dispatch = dispatch
 
-AbstractItem.extensions = [];
+AbstractItem.extensions = []
 
-AbstractItem.retrieve = function() {
-    return false;
-};
-
-
-function load() {
-    this.isStartLoaded = true;
+AbstractItem.retrieve = function () {
+  return false
 }
 
-function _onLoad() {
-
-    this.isLoaded = true;
-    this.loadedWeight = this.weight;
-    energize.loadedItems[this.url] = this;
-    this.onLoaded.dispatch(this.content);
+function load () {
+  this.isStartLoaded = true
 }
 
-function _onLoading(percent) {
-    this.loadedWeight = this.weight * percent;
+function _onLoad () {
+
+  this.isLoaded = true
+  this.loadedWeight = this.weight
+  energize.loadedItems[this.url] = this
+  this.onLoaded.dispatch(this.content)
 }
 
-function dispatch() {
-    if (this.hasLoading) {
-        this.loadingSignal.remove();
-    }
-    this.onLoaded.dispatch(this.content);
+function _onLoading (percent) {
+  this.loadedWeight = this.weight * percent
+}
+
+function dispatch () {
+  if (this.hasLoading) {
+    this.loadingSignal.remove()
+  }
+  this.onLoaded.dispatch(this.content)
 }

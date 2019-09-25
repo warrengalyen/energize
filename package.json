@@ -27,7 +27,8 @@
     "browserify": "~16.5.0"
   },
   "dependencies": {
+    "computed-style": "~0.3.0",
     "short-signal": "~0.0.5",
-    "computed-style": "~0.3.0"
+    "mout": "~1.0.0"
   }
 }
