@@ -1,0 +1,33 @@
+{
+  "name": "energize",
+  "version": "0.1.0",
+  "description": "An asset loader that loads everything",
+  "main": "index.js",
+  "author": "Warren Galyen",
+  "license": "GNU GPLv3",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/warrengalyen/energize.git"
+  },
+  "keywords": [
+    "loader",
+    "preload",
+    "preloader",
+    "asset",
+    "assets"
+  ],
+  "bugs": {
+    "url": "https://github.com/warrengalyen/energize/issues"
+  },
+  "homepage": "https://github.com/warrengalyen/energize",
+  "scripts": {
+    "build": "browserify index.js --standalone energize > ./dist/energize.js"
+  },
+  "devDependencies": {
+    "browserify": "~16.5.0"
+  },
+  "dependencies": {
+    "short-signal": "~0.0.5",
+    "computed-style": "~0.3.0"
+  }
+}
