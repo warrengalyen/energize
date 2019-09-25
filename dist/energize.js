@@ -646,12 +646,8 @@ energize.register(ImageItem)
 function load () {
   _super.load.apply(this, arguments)
   var img = this.content
+  img.onload = this.boundOnLoad
   img.src = this.url
-  if (img.complete) {
-    this._onLoad()
-  } else {
-    img.onload = this.boundOnLoad
-  }
 }
 
 function _onLoad () {
