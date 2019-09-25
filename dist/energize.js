@@ -196,13 +196,16 @@ function Energize () {
   this.itemUrls = {}
   this.itemList = []
   this.loadingSignal = new ShortSignal()
+  this.crossOriginMap = {}
 }
 
 var _p = Energize.prototype
 _p.addChunk = addChunk
+_p.setCrossOrigin = setCrossOrigin
 _p.add = add
 _p.load = load
 _p.start = start
+_p.createItem = _createItem
 _p._onLoading = _onLoading
 
 var energize = module.exports = create()
@@ -221,6 +224,10 @@ var loadedItems = energize.loadedItems = {}
 var ITEM_CLASS_LIST = energize.ITEM_CLASS_LIST = []
 var ITEM_CLASSES = energize.ITEM_CLASSES = {}
 
+function setCrossOrigin (domain, value) {
+  this.crossOriginMap[domain] = value
+}
+
 function addChunk (target, type) {
   var i, j, len, itemsLength, retrievedTypeObj
   var retrievedTypeObjList = retrieveAll(target, type)
@@ -236,7 +243,7 @@ function addChunk (target, type) {
 function add (url, cfg) {
   var item = addedItems[url]
   if (!item) {
-    item = _createItem(url, (cfg && cfg.type) ? cfg.type : retrieve(url).type, cfg)
+    item = this._createItem(url, (cfg && cfg.type) ? cfg.type : retrieve(url).type, cfg)
   }
 
   if (cfg && cfg.onLoad) item.onLoaded.addOnce(cfg.onLoad)
@@ -254,7 +261,7 @@ function load (url, cfg) {
 
   var item = addedItems[url]
   if (!item) {
-    item = _createItem(url, (cfg && cfg.type) ? cfg.type : retrieve(url).type, cfg)
+    item = this._createItem(url, (cfg && cfg.type) ? cfg.type : retrieve(url).type, cfg)
   }
 
   if (cfg && cfg.onLoad) item.onLoaded.addOnce(cfg.onLoad)
@@ -335,6 +342,15 @@ function _onItemLoad (item, itemList) {
 }
 
 function _createItem (url, type, cfg) {
+  cfg = cfg || {}
+  if (!cfg.crossOrigin) {
+    for (domain in this.crossOriginMap) {
+      if (url.indexOf(domain) === 0) {
+        cfg.crossOrigin = this.crossOriginMap[domain]
+        break
+      }
+    }
+  }
   return new ITEM_CLASSES[type](url, cfg)
 }
 
@@ -555,6 +571,9 @@ function AudioItem (url, cfg) {
   } catch (e) {
     this.content = document.createElement('audio')
   }
+  if (this.crossOrigin) {
+    this.content.crossOrigin = this.crossOrigin;
+  }
 }
 
 module.exports = AudioItem
@@ -603,6 +622,9 @@ function ImageItem (url, cfg) {
   if (!url) return
   _super.constructor.apply(this, arguments)
   this.content = new Image()
+  if (this.crossOrigin) {
+    this.content.crossOrigin = this.crossOrigin
+  }
 }
 
 module.exports = ImageItem
@@ -830,6 +852,9 @@ function VideoItem (url, cfg) {
     this.content = new Video()
   } catch (e) {
     this.content = document.createElement('video')
+  }
+  if (this.crossOrigin) {
+    this.content.crossOrigin = this.crossOrigin
   }
 }
 
