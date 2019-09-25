@@ -13,7 +13,7 @@ function AudioItem (url, cfg) {
     this.content = document.createElement('audio')
   }
   if (this.crossOrigin) {
-    this.content.crossOrigin = this.crossOrigin;
+    this.content.crossOrigin = this.crossOrigin
   }
 }
 

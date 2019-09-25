@@ -10,6 +10,9 @@ function Energize () {
   this.itemList = []
   this.loadingSignal = new ShortSignal()
   this.crossOriginMap = {}
+  this.queue = []
+  this.activeItems = []
+  this.maxActiveItems = 4
 }
 
 var _p = Energize.prototype
@@ -18,11 +21,12 @@ _p.setCrossOrigin = setCrossOrigin
 _p.add = add
 _p.load = load
 _p.start = start
+_p.loadNext = loadNext
 _p.createItem = _createItem
 _p._onLoading = _onLoading
 
 var energize = module.exports = create()
-energize.version = '0.1.4'
+energize.version = '0.1.8'
 energize.register = register
 energize.retrieveAll = retrieveAll
 energize.retrieve = retrieve
@@ -99,21 +103,34 @@ function start (onLoading) {
     var item
     for (var i = 0; i < len; i++) {
       item = itemList[i]
-      item.onLoaded.addOnce(_onItemLoad, this, -1024, item, itemList)
+      var isAlreadyLoaded = !!loadedItems[item.url]
+      item.onLoaded.addOnce(_onItemLoad, this, -1024, item, itemList, isAlreadyLoaded)
       if (item.hasLoading) {
         item.loadingSignal.add(_onLoading, this, -1024, item, itemList, undef)
       }
 
-      if (loadedItems[item.url]) {
+      if (isAlreadyLoaded) {
         item.dispatch(_onItemLoad)
       } else {
         if (!item.isStartLoaded) {
-          item.load()
+          this.queue.push(item)
         }
       }
     }
+    if (this.queue.length) {
+      this.loadNext()
+    }
   } else {
     _onItemLoad.call(this, undef, this.itemList)
+  }
+}
+
+function loadNext () {
+  if (this.queue.length && (this.activeItems.length < this.maxActiveItems)) {
+    var item = this.queue.shift()
+    this.activeItems.push(item)
+    this.loadNext()
+    item.load()
   }
 }
 
@@ -138,9 +155,20 @@ function _getLoadedWeight (itemList) {
   return loadedWeight
 }
 
-function _onItemLoad (item, itemList) {
+function _onItemLoad (item, itemList, isAlreadyLoaded) {
 
   this.loadedWeight = _getLoadedWeight(itemList)
+
+  if (!isAlreadyLoaded) {
+    var activeItems = this.activeItems
+    var i = activeItems.length
+    while (i--) {
+      if (activeItems[i] === item) {
+        activeItems.splice(i, 1)
+        break
+      }
+    }
+  }
 
   var loadingSignal = this.loadingSignal
   if (this.loadedWeight === this.totalWeight) {
@@ -151,6 +179,9 @@ function _onItemLoad (item, itemList) {
     this._onLoading(item, itemList, loadingSignal, 1, 1)
   } else {
     this._onLoading(item, itemList, loadingSignal, 1, this.loadedWeight / this.totalWeight)
+    if (!isAlreadyLoaded) {
+      this.loadNext()
+    }
   }
 }
 
@@ -225,7 +256,7 @@ function retrieve (target, type) {
       items: items
     }
   }
-  return
+
 }
 
 function testExtensions (url, ItemClass) {
