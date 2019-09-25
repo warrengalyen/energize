@@ -161,7 +161,9 @@ batcherLoader.add(...);
 ```
 
 ## Installation
+Download the standalone version **[HERE](https://raw.githubusercontent.com/warrengalyen/energize/master/dist/energize.js)**
 
+`npm install energize`
 
 ## Todo
 - Write an example to show how to create your own custom types
