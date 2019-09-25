@@ -160,11 +160,21 @@ batcherLoader.add(...);
 
 ```
 
+### Cross Origin
+```js
+var energize = require('energize');
+
+// set everything to be cross-origin within a domain
+energize.setCrossOrigin('http:///mydomain/', 'anonymous')
+
+// set cross-origin for individual load item
+energize.add('http://anotherdomain/image.jpg,', {
+  crossOrigin: 'anonymous'
+})
+
+```
+
 ## Installation
 Download the standalone version **[HERE](https://raw.githubusercontent.com/warrengalyen/energize/master/dist/energize.js)**
 
 `npm install energize`
-
-## Todo
-- Write an example to show how to create your own custom types
-- Cross domain support
