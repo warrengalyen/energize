@@ -1,15 +1,15 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.energize = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-module.exports = require('./src/energize');
+module.exports = require('./src/energize')
 
-require('./src/types/JSONPItem');
-require('./src/types/JSONItem');
-require('./src/types/TextItem');
-require('./src/types/AudioItem');
-require('./src/types/VideoItem');
-require('./src/types/AnyItem');
-require('./src/types/ImageItem');
-
-},{"./src/energize":4,"./src/types/AnyItem":6,"./src/types/AudioItem":7,"./src/types/ImageItem":8,"./src/types/JSONItem":9,"./src/types/JSONPItem":10,"./src/types/TextItem":11,"./src/types/VideoItem":12}],2:[function(require,module,exports){
+require('./src/types/JSONPItem')
+require('./src/types/JSONItem')
+require('./src/types/TextItem')
+require('./src/types/AudioItem')
+require('./src/types/VideoItem')
+require('./src/types/AnyItem')
+require('./src/types/ImageItem')
+require('./src/types/XHRItem')
+},{"./src/energize":4,"./src/types/AnyItem":6,"./src/types/AudioItem":7,"./src/types/ImageItem":8,"./src/types/JSONItem":9,"./src/types/JSONPItem":10,"./src/types/TextItem":11,"./src/types/VideoItem":12,"./src/types/XHRItem":13}],2:[function(require,module,exports){
 // DEV: We don't use var but favor parameters since these play nicer with minification
 function computedStyle(el, prop, getComputedStyle, style) {
   getComputedStyle = window.getComputedStyle;
@@ -364,10 +364,10 @@ function _onItemLoad (item, itemList, isAlreadyLoaded) {
     this.totalWeight = 0
     this.loadingSignal = new ShortSignal()
     this._onLoading(item, itemList, loadingSignal, 1, 1)
-    if (item.noCache) _removeItemCache()
+    if (item && item.noCache) _removeItemCache(item)
   } else {
     this._onLoading(item, itemList, loadingSignal, 1, this.loadedWeight / this.totalWeight)
-    if (item.noCache) _removeItemCache()
+    if (item && item.noCache) _removeItemCache(item)
     if (!isAlreadyLoaded) {
       this.loadNext()
     }
@@ -746,8 +746,8 @@ _p.constructor = JSONItem
 _p.onLoad = _onLoad
 
 function _onLoad () {
-  if (this.content) {
-    this.content = window.JSON && window.JSON.parse ? JSON.parse(this.content.toString()) : eval(this.content.toString())
+  if (!this.content) {
+    this.content = window.JSON && window.JSON.parse ? JSON.parse(this.xmlhttp.responseText.toString()) : eval(this.xmlhttp.responseText.toString())
   }
   _super._onLoad.call(this)
 }
@@ -805,15 +805,14 @@ function load (callback) {
   document.getElementsByTagName('head')[0].appendChild(script)
 }
 },{"../energize":4,"./AbstractItem":5}],11:[function(require,module,exports){
-var AbstractItem = require('./AbstractItem')
+var XHRItem = require('./XHRItem')
 var energize = require('../energize')
 
 var undef
 
-var IS_SUPPORT_XML_HTTP_REQUEST = !!window.XMLHttpRequest
-
-function TextItem (url) {
+function TextItem (url, cfg) {
   if (!url) return
+  cfg.responseType = 'text'
   _super.constructor.apply(this, arguments)
 }
 
@@ -826,57 +825,18 @@ TextItem.retrieve = function () {
   return false
 }
 
-var _super = AbstractItem.prototype
-var _p = TextItem.prototype = new AbstractItem()
+var _super = XHRItem.prototype
+var _p = TextItem.prototype = new XHRItem()
 _p.constructor = TextItem
-_p.load = load
-_p._onXmlHttpChange = _onXmlHttpChange
-_p._onXmlHttpProgress = _onXmlHttpProgress
 _p._onLoad = _onLoad
 
-function load () {
-  _super.load.apply(this, arguments)
-  var self = this
-  var xmlhttp
-
-  if (IS_SUPPORT_XML_HTTP_REQUEST) {
-    xmlhttp = this.xmlttp = new XMLHttpRequest()
-  } else {
-    xmlhttp = this.xmlttp = new ActiveXObject('Microsoft.XMLHTTP')
-  }
-  if (this.hasLoading) {
-    xmlhttp.onprogress = function (evt) { self._onXmlHttpProgress(evt) }
-  }
-  xmlhttp.onreadystatechange = function () { self._onXmlHttpChange() }
-  xmlhttp.open('GET', this.url, true)
-
-  if (IS_SUPPORT_XML_HTTP_REQUEST) {
-    xmlhttp.send(null)
-  } else {
-    xmlhttp.send()
-  }
-}
-
-function _onXmlHttpProgress (evt) {
-  this.loadingSignal.dispatch(evt.loaded / evt.total)
-}
-
-function _onXmlHttpChange () {
-  if (this.xmlhttp.readyState === 4) {
-    if (this.xmlttp.status === 200) {
-      this.content = this.xmlttp.responseText
-      this._onLoad()
-    }
-  }
-}
-
 function _onLoad () {
-  if (this.content) {
-    this.xmlhttp = undef
+  if (!this.content) {
+    this.content = this.xmlhttp.responseText
   }
-  _super._onLoad.call(this)
+  _super._onLoad.apply(this, arguments)
 }
-},{"../energize":4,"./AbstractItem":5}],12:[function(require,module,exports){
+},{"../energize":4,"./XHRItem":13}],12:[function(require,module,exports){
 var AbstractItem = require('./AbstractItem')
 var energize = require('../energize')
 
@@ -933,6 +893,86 @@ function _onLoad () {
   if (this.isLoaded) {
     return
   }
+  _super._onLoad.call(this)
+}
+},{"../energize":4,"./AbstractItem":5}],13:[function(require,module,exports){
+var AbstractItem = require('./AbstractItem')
+var energize = require('../energize')
+
+var undef
+
+var IS_SUPPORT_XML_HTTP_REQUEST = !!window.XMLHttpRequest
+
+function XHRItem (url) {
+  if (!url) return
+  _super.constructor.apply(this, arguments)
+  this.responseType = this.responseType || ''
+  this.method = this.method || 'GET'
+}
+
+module.exports = XHRItem
+XHRItem.type = 'xhr'
+XHRItem.extensions = []
+energize.register(XHRItem)
+
+XHRItem.retrieve = function () {
+  return false
+}
+
+var _super = AbstractItem.prototype
+var _p = XHRItem.prototype = new AbstractItem()
+_p.constructor = XHRItem
+_p.load = load
+_p._onXmlHttpChange = _onXmlHttpChange
+_p._onXmlHttpProgress = _onXmlHttpProgress
+_p._onLoad = _onLoad
+
+function load () {
+  _super.load.apply(this, arguments)
+  var self = this
+  var xmlhttp
+
+  if (IS_SUPPORT_XML_HTTP_REQUEST) {
+    xmlhttp = this.xmlhttp = new XMLHttpRequest()
+  } else {
+    xmlhttp = this.xmlttp = new ActiveXObject('Microsoft.XMLHTTP')
+  }
+  if (this.hasLoading) {
+    xmlhttp.onprogress = function (evt) {
+      self._onXmlHttpProgress(evt)
+    }
+  }
+  xmlhttp.onreadystatechange = function () {
+    self._onXmlHttpChange
+  }
+  xmlhttp.open(this.method, this.url, true)
+  this.xmlttp.responseType = this.responseType
+
+  if (IS_SUPPORT_XML_HTTP_REQUEST) {
+    xmlhttp.send(null)
+  } else {
+    xmlhttp.send()
+  }
+
+}
+
+function _onXmlHttpProgress (evt) {
+  this.loadingSignal.dispatch(evt.loaded / evt.total)
+}
+
+function _onXmlHttpChange () {
+  if (this.xmlttp.readyState === 4) {
+    if (this.xmlttp.status === 200) {
+      this._onLoad(this.xmlttp)
+    }
+  }
+}
+
+function _onLoad () {
+  if (!this.content) {
+    this.content = this.xmlhttp.response
+  }
+  this.xmlhttp = undef
   _super._onLoad.call(this)
 }
 },{"../energize":4,"./AbstractItem":5}]},{},[1])(1)
